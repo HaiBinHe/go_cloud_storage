@@ -1,9 +1,8 @@
-package db
+package model
 
 import (
 	"fmt"
-	"go-cloud/cmd"
-	"go-cloud/internal/model"
+	"go-cloud/conf"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -14,14 +13,14 @@ var (
 	Db *gorm.DB
 )
 
-func InitMySQLConn() error{
+func InitMySQLConn() error {
 	var err error
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=True&loc=Local",
-	cmd.DataBaseSetting.UserName,
-	cmd.DataBaseSetting.Password,
-	cmd.DataBaseSetting.Host,
-	cmd.DataBaseSetting.DBName,
-	cmd.DataBaseSetting.Charset,
+		conf.DataBaseSetting.UserName,
+		conf.DataBaseSetting.Password,
+		conf.DataBaseSetting.Host,
+		conf.DataBaseSetting.DBName,
+		conf.DataBaseSetting.Charset,
 	)
 	Db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -37,28 +36,27 @@ func InitMySQLConn() error{
 		return err
 	}
 
-	sqlDb.SetMaxIdleConns(cmd.DataBaseSetting.MaxIdleConns)
-	sqlDb.SetMaxOpenConns(cmd.DataBaseSetting.MaxOpenConns)
+	sqlDb.SetMaxIdleConns(conf.DataBaseSetting.MaxIdleConns)
+	sqlDb.SetMaxOpenConns(conf.DataBaseSetting.MaxOpenConns)
 	err = sqlDb.Ping()
 	if err != nil {
 		log.Println("mysql ping err:", err)
 		return err
 	}
 	log.Println("mysql server start")
-	 err = autoMigrate()
+	err = autoMigrate()
 	if err != nil {
 		log.Println("gorm autoMigrate err: ", err)
 	}
 	log.Println("AutoMigrate Success")
 	return nil
 }
-func autoMigrate() error{
+func autoMigrate() error {
 	return Db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(
-		&model.User{},
-		&model.UserInfo{},
-		&model.UserFile{},
-		&model.FileStore{},
-		&model.FileFolder{},
-		&model.FileShare{},
-		)
+		&User{},
+		&UserFile{},
+		&FileStore{},
+		&FileFolder{},
+		&FileShare{},
+	)
 }

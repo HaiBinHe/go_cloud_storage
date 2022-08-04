@@ -1,4 +1,4 @@
-package cmd
+package conf
 
 import (
 	"go-cloud/tools"
@@ -8,15 +8,14 @@ import (
 )
 
 var (
-	ServerSetting *Server
-	AppSetting *AppSettingS
-	JWTSetting *JWTSettingS
+	ServerSetting   *Server
+	AppSetting      *AppSettingS
+	JWTSetting      *JWTSettingS
 	DataBaseSetting *DatabaseSettingS
-	RedisSetting *RedisSettingS
-
+	RedisSetting    *RedisSettingS
 )
 
-func InitSettings() error{
+func InitSettings() error {
 	ServerSetting = &Server{}
 	AppSetting = &AppSettingS{}
 	JWTSetting = &JWTSettingS{}
@@ -61,6 +60,7 @@ func InitSettings() error{
 	JWTSetting.Expire *= time.Second
 	return nil
 }
+
 //TODO 通过命令行解析 -port  -configPath -runMode
 func InitFlag() error {
 	return nil

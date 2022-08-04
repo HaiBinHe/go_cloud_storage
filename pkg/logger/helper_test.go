@@ -2,14 +2,12 @@ package logger
 
 import (
 	"context"
-	"go-cloud/cmd"
+	"go-cloud/conf"
 	"testing"
 )
 
-
-
 func TestInitLogger(t *testing.T) {
-	err := cmd.InitSettings()
+	err := conf.InitSettings()
 	if err != nil {
 		return
 	}
@@ -18,21 +16,24 @@ func TestInitLogger(t *testing.T) {
 		return
 	}
 	ctx := context.Background()
-	h.WithFields(Fields{"id":"1"}).Info(ctx, "info msg")
-	h.WithFields(Fields{"id":"2"}).Debug(ctx, "debug msg")
-	h.WithFields(Fields{"id":"3"}).Warn(ctx, "warn msg")
-	h.WithFields(Fields{"id":"4"}).Error(ctx, "error msg")
+	h.WithFields(Fields{"id": "1"}).Info(ctx, "info msg")
+	h.WithFields(Fields{"id": "2"}).Debug(ctx, "debug msg")
+	h.WithFields(Fields{"id": "3"}).Warn(ctx, "warn msg")
+	h.WithFields(Fields{"id": "4"}).Error(ctx, "error msg")
 }
-func TestDefaultLogger(t *testing.T){
-	err := cmd.InitSettings()
+func TestDefaultLogger(t *testing.T) {
+	err := conf.InitSettings()
 	if err != nil {
 		return
 	}
 	h := NewStdLogger()
 
 	ctx := context.Background()
-	h.WithFields(Fields{"id":"1"}).Info(ctx, "info msg")
-	h.WithFields(Fields{"id":"2"}).Debug(ctx, "debug msg")
-	h.WithFields(Fields{"id":"3"}).Warn(ctx, "warn msg")
-	h.WithFields(Fields{"id":"4"}).Error(ctx, "error msg")
+	h.WithFields(Fields{"id": "1"}).Info(ctx, "info msg")
+	h.WithFields(Fields{"id": "2"}).Debug(ctx, "debug msg")
+	h.WithFields(Fields{"id": "3"}).Warn(ctx, "warn msg")
+	h.WithFields(Fields{"id": "4"}).Error(ctx, "error msg")
+}
+func TestNewStdLogger(t *testing.T) {
+	StdLog().Info(context.Background(), "heawf")
 }

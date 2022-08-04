@@ -1,12 +1,12 @@
-package db
+package cache
 
 import (
-	"go-cloud/cmd"
+	"go-cloud/conf"
 	"testing"
 )
 
 func Test_initRedisConn(t *testing.T) {
-	err := cmd.InitSettings()
+	err := conf.InitSettings()
 
 	err = InitRedisConn()
 	if err != nil {

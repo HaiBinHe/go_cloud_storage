@@ -1,11 +1,11 @@
-package cmd
+package conf
 
 import "time"
 
-type Server struct{
-	RunMode string
-	Port string
-	ReadTimeOut time.Duration
+type Server struct {
+	RunMode      string
+	Port         string
+	ReadTimeOut  time.Duration
 	WriteTimeOut time.Duration
 }
 type AppSettingS struct {
@@ -14,11 +14,11 @@ type AppSettingS struct {
 	LogSavePath     string
 	LogFileName     string
 	LogFileExt      string
-	UploadSavePath       string
-	UploadServerUrl      string
+	UploadSavePath  string
+	UploadServerUrl string
 }
 type DatabaseSettingS struct {
-	DBType	     string
+	DBType       string
 	UserName     string
 	Password     string
 	Host         string
@@ -27,15 +27,15 @@ type DatabaseSettingS struct {
 	MaxIdleConns int
 	MaxOpenConns int
 }
-type RedisSettingS struct{
-	Host string
-	Port int
+type RedisSettingS struct {
+	Host     string
+	Port     int
 	Password string
-	Db int
+	Db       int
 	PoolSize int
 }
 
-type JWTSettingS struct{
+type JWTSettingS struct {
 	Secret string
 	Issuer string
 	Expire time.Duration

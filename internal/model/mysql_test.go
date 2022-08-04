@@ -1,12 +1,12 @@
-package db
+package model
 
 import (
-	"go-cloud/cmd"
+	"go-cloud/conf"
 	"testing"
 )
 
 func Test_initMySQLConn(t *testing.T) {
-	err := cmd.InitSettings()
+	err := conf.InitSettings()
 	if err != nil {
 		return
 	}

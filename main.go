@@ -1,8 +1,9 @@
 package main
 
 import (
-	"go-cloud/cmd"
-	"go-cloud/internal/db"
+	"go-cloud/conf"
+	"go-cloud/internal/cache"
+	"go-cloud/internal/model"
 	"log"
 )
 
@@ -10,20 +11,20 @@ func main() {
 
 }
 
-func init(){
+func init() {
 	//初始化配置文件
-	err := cmd.InitSettings()
+	err := conf.InitSettings()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	//初始化数据库
-	err = db.InitMySQLConn()
+	err = model.InitMySQLConn()
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	err = db.InitRedisConn()
+	err = cache.InitRedisConn()
 	if err != nil {
 		log.Println(err)
 		return
