@@ -58,5 +58,6 @@ func autoMigrate() error {
 		&FileStore{},
 		&FileFolder{},
 		&FileShare{},
+		&FileCenter{},
 	)
 }

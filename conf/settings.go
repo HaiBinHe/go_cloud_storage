@@ -1,9 +1,10 @@
 package conf
 
 import (
-	"go-cloud/tools"
 	"gopkg.in/ini.v1"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -22,7 +23,7 @@ func InitSettings() error {
 	DataBaseSetting = &DatabaseSettingS{}
 	RedisSetting = &RedisSettingS{}
 	//获取指定目录所在的根目录
-	path := tools.InferRootDir("/conf")
+	path := InferRootDir("/conf")
 	cfg, err := ini.Load(path + "/conf/config.ini")
 
 	if err != nil {
@@ -64,4 +65,31 @@ func InitSettings() error {
 //TODO 通过命令行解析 -port  -configPath -runMode
 func InitFlag() error {
 	return nil
+}
+
+// InferRootDir 根据已存在的目录名推断出根目录
+//path ex. “/conf”
+func InferRootDir(path string) string {
+	var RootDir string
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	var infer func(d string) string
+	infer = func(d string) string {
+		// 这里要确保项目根目录下存在 template 目录
+		if exists(d + path) {
+			return d
+		}
+
+		return infer(filepath.Dir(d))
+	}
+
+	RootDir = infer(cwd)
+	return RootDir
+}
+
+func exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil || os.IsExist(err)
 }

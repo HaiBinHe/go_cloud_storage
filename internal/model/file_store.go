@@ -12,6 +12,10 @@ func (f *FileStore) TableName() string {
 	return "file_store"
 }
 
+func (f *FileStore) Create() error {
+	return Db.Create(&f).Error
+}
+
 //根据用户ID获取仓库列表
 func GetUserFileStore(UID uint64) (fs []FileStore) {
 	Db.Where("user_id = ?", UID).Find(&fs)

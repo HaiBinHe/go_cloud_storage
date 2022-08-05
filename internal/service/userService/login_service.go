@@ -26,8 +26,8 @@ func DoLogin(ctx *gin.Context, user model.User) {
 	}
 	response.RespData(
 		ctx,
-		"登陆成功!",
 		map[string]string{
+			"msg":          "登陆成功",
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
 		})

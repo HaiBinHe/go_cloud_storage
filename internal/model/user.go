@@ -47,7 +47,24 @@ func (u *User) Create() error {
 		return err
 	}
 	u.Password = password
-	return Db.Create(&u).Error
+	err = Db.Create(&u).Error
+	if err != nil {
+		return err
+	}
+	//创建默认的文件仓库
+	store := FileStore{
+		UserID:    u.ID,
+		StoreName: "default",
+		//默认1G
+		MaxSize:     1048576,
+		CurrentSize: 0,
+	}
+	err = store.Create()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // 根据 `struct` 更新属性，只会更新非零值的字段
