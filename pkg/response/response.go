@@ -35,7 +35,6 @@ func RespValidatorError(c *gin.Context, msg interface{}) {
 }
 func RespData(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, gin.H{
-
 		"data": data,
 	})
 }

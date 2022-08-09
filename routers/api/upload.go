@@ -20,7 +20,7 @@ type userUpload struct {
 	Username    string `json:"username" binding:"max=20"`
 	FileStoreID uint64 `json:"file_store_id" binding:"required"`
 	ParentID    uint64 `json:"parent_id,omitempty" `
-	fileHash    string `binding:"-"`
+	FileHash    string `json:"file_hash" binding:"required"`
 	fileName    string `binding:"-"`
 	fileSize    int64  `binding:"-"`
 	fileType    int    `binding:"-"`
@@ -53,9 +53,9 @@ func Upload(c *gin.Context) {
 	uf.fileSize = fileHeader.Size
 	uf.fileExt = tools.GetFileExt(fileHeader.Filename)
 	uf.fileType = int(tools.Type(uf.fileExt))
-	//query
+	//文件仓库
 	fs, err := strconv.ParseUint(c.Query("file_store_id"), 10, 64)
-	//defaultQuery
+	//父目录
 	p, err := strconv.ParseUint(c.DefaultQuery("parent_id", "0"), 10, 64)
 	if err != nil {
 		logger.StdLog().Errorf(c, "parseUint failed:", err)
@@ -64,16 +64,24 @@ func Upload(c *gin.Context) {
 	}
 	uf.FileStoreID = fs
 	uf.ParentID = p
-	//普通上传
-	info, err := upload(file, fileHeader, *uf)
+	//1.秒传
+	ok, info := fastUpload(fileHeader, uf)
+	if ok {
+		response.RespData(c, info)
+		return
+	}
+	//2.普通上传
+	info, err = upload(file, fileHeader, *uf)
 	if err != nil {
+		logger.StdLog().Errorf(c, "upload failed:", err)
+		response.RespError(c, error2.ServerError)
 		return
 	}
 	response.RespData(c, info)
 
 }
 
-//TODO 普通上传,分块上传,保存到数据库,OSS存储,Ceph存储
+//TODO 普通上传,保存到数据库,OSS存储,Ceph存储
 //上传文件
 func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload) (*FileInfo, error) {
 	//文件保存目录
@@ -84,47 +92,62 @@ func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload)
 	//如果有同名的文件 访问路径不就一样了, 用户名+文件名 生成md5
 	md5path := tools.EncodeMD5(u.Username + u.fileName)
 	accessUrl := conf.AppSetting.UploadServerUrl + "/" + md5path
+	//1.检查文件夹是否存在以及权限问题
+	err := checkDirAndPermission(savePath)
+	if err != nil {
+		return nil, err
+	}
 
-	//检查文件是否达到分块大小
-	if tools.CheckMaxSize(file) {
-		//TODO 分块上传逻辑
-		chunksUpload()
-	} else {
-		//检查是否存在文件目录
-		if tools.CheckSavePath(savePath) {
-			if err := tools.CreatSavePath(savePath, os.ModePerm); err != nil {
-				return nil, error2.DirError
-			}
-		}
-		//检查文件权限
-		if tools.CheckPermission(savePath) {
-			return nil, error2.DirPermissionError
-		}
-		//保存文件
-		if err := tools.SaveFile(fileHeader, dst); err != nil {
-			return nil, err
-		}
-		//TODO 保存到数据库中
-
+	//2.保存文件
+	if err := tools.SaveFile(fileHeader, dst); err != nil {
+		return nil, err
+	}
+	//3.文件信息保存到数据库中
+	err = saveToDB(u.fileName, u)
+	if err != nil {
+		return nil, err
 	}
 	return &FileInfo{
 		Name:       u.fileName,
 		Size:       u.fileSize,
 		AccessUrl:  accessUrl,
-		UploadPath: savePath,
+		UploadPath: dst,
 	}, nil
 }
 
-//chunksUpload 分块上传
-func chunksUpload() {
+//秒传
+func fastUpload(fileHeader *multipart.FileHeader, u *userUpload) (bool, *FileInfo) {
+	//1.查询中心文件表中是否有相同Hash的文件
+	fc := model.NewFileCenter()
+	//中心文件表存在相同Hash的文件
+	if fc.FileIsExist(u.FileHash) {
+		//文件保存目录
+		savePath := tools.GetSavePath()
+		//文件路径
+		dst := savePath + "/" + u.Username + "/" + u.fileName
+		//生成文件路径
+		md5path := tools.EncodeMD5(u.Username + u.fileName)
+		accessUrl := conf.AppSetting.UploadServerUrl + "/" + md5path
 
+		//2.返回成功以及文件相关信息
+		return true, &FileInfo{
+			AccessUrl:  accessUrl,
+			UploadPath: dst,
+			Name:       fileHeader.Filename,
+			Size:       fileHeader.Size,
+		}
+	} else {
+		//3.中心文件不存在则进入普通上传模块
+		//TODO 同时将数据存入中心文件表中
+		return false, nil
+	}
 }
 
 //saveToDB 保存到数据库中
 func saveToDB(fileName string, u userUpload) error {
 	uf := model.UserFile{
 		FileName:     fileName,
-		FileHash:     u.fileHash,
+		FileHash:     u.FileHash,
 		FileSize:     u.fileSize,
 		FileStoreID:  u.FileStoreID,
 		FileFolderID: u.ParentID,
@@ -133,6 +156,20 @@ func saveToDB(fileName string, u userUpload) error {
 	if err != nil {
 		logger.StdLog().Error(context.Background(), "save user's FileInfo failed")
 		return err
+	}
+	return nil
+}
+
+func checkDirAndPermission(savePath string) error {
+	//检查是否存在文件目录
+	if tools.CheckSavePath(savePath) {
+		if err := tools.CreatSavePath(savePath, os.ModePerm); err != nil {
+			return error2.DirError
+		}
+	}
+	//检查文件权限
+	if tools.CheckPermission(savePath) {
+		return error2.DirPermissionError
 	}
 	return nil
 }

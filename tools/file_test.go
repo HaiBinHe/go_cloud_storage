@@ -11,4 +11,5 @@ func Test_file(t *testing.T) {
 	str := "aaa.mp4"
 	println(Type(ext))
 	println(GetFileExt(str))
+
 }
