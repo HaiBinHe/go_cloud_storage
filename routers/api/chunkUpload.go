@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"go-cloud/internal/cache"
+	upload2 "go-cloud/internal/service/upload"
 	"go-cloud/pkg/app"
 	error2 "go-cloud/pkg/error"
 	"go-cloud/pkg/logger"
@@ -134,6 +135,7 @@ func MergeChunk(c *gin.Context) {
 	savePath := tools.GetSavePath()
 	//文件路径
 	dst := savePath + "/" + cf.UserName + "/" + cf.FileName
+	cf.FileExt = tools.GetFileExt(cf.FileName)
 	//不存在，可以进行分块上传
 	if tools.CheckSavePath(dst) {
 		dirpath := savePath + "/" + cf.UserName + "/chunk/" + cf.FileHash
@@ -149,7 +151,9 @@ func MergeChunk(c *gin.Context) {
 			return
 		}
 		// 遍历分块文件夹
+		var totalSize int64 = 0
 		for _, f := range files {
+			totalSize += f.Size()
 			fileBuffer, err := ioutil.ReadFile(dirpath + "/" + f.Name())
 			if err != nil {
 				response.RespError(c, "读取文件失败")
@@ -163,7 +167,20 @@ func MergeChunk(c *gin.Context) {
 			}
 		}
 		//TODO 记录到数据库中 中心存储数据库和用户文件数据库
-
+		uf := upload2.UserUpload{
+			FileStoreID: cf.FileStoreID,
+			FileName:    cf.FileName,
+			FileHash:    cf.FileHash,
+			FileType:    int(tools.Type(cf.FileExt)),
+			FileExt:     cf.FileExt,
+			FileSize:    totalSize,
+			ParentID:    cf.ParentID,
+		}
+		err = upload2.SaveToDB(uf)
+		if err != nil {
+			response.RespError(c, "数据库写入错误")
+			return
+		}
 		//TODO 删除redis中的分块缓存
 
 	}

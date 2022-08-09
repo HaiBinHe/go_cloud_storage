@@ -1,10 +1,10 @@
 package api
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"go-cloud/conf"
 	"go-cloud/internal/model"
+	upload2 "go-cloud/internal/service/upload"
 	"go-cloud/pkg/app"
 	error2 "go-cloud/pkg/error"
 	"go-cloud/pkg/logger"
@@ -103,10 +103,21 @@ func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload)
 		return nil, err
 	}
 	//3.文件信息保存到数据库中
-	err = saveToDB(u.fileName, u)
+	uf := upload2.UserUpload{
+		FileStoreID: u.FileStoreID,
+		FileName:    u.fileName,
+		FileHash:    u.FileHash,
+		FileType:    u.fileType,
+		FileExt:     u.fileExt,
+		FileSize:    u.fileSize,
+		ParentID:    u.ParentID,
+	}
+	err = upload2.SaveToDB(uf)
 	if err != nil {
 		return nil, err
 	}
+	//TODO 保存到中心文件表中
+
 	return &FileInfo{
 		Name:       u.fileName,
 		Size:       u.fileSize,
@@ -141,23 +152,6 @@ func fastUpload(fileHeader *multipart.FileHeader, u *userUpload) (bool, *FileInf
 		//TODO 同时将数据存入中心文件表中
 		return false, nil
 	}
-}
-
-//saveToDB 保存到数据库中
-func saveToDB(fileName string, u userUpload) error {
-	uf := model.UserFile{
-		FileName:     fileName,
-		FileHash:     u.FileHash,
-		FileSize:     u.fileSize,
-		FileStoreID:  u.FileStoreID,
-		FileFolderID: u.ParentID,
-	}
-	err := uf.Create()
-	if err != nil {
-		logger.StdLog().Error(context.Background(), "save user's FileInfo failed")
-		return err
-	}
-	return nil
 }
 
 func checkDirAndPermission(savePath string) error {
