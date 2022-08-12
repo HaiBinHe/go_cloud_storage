@@ -11,7 +11,7 @@ import (
 
 //创建分享
 func CreateShare(c *gin.Context) {
-	var cs *share.CreateShare
+	var cs *share.ShareCreateService
 	valid, err := app.BindAndValid(c, &cs)
 	if !valid {
 		logger.StdLog().Errorf(c, "app.BindAndValid err :%v", err)
@@ -22,6 +22,16 @@ func CreateShare(c *gin.Context) {
 }
 
 //查看分享
+func GetShare(c *gin.Context) {
+	var cg *share.ShareGetService
+	err := c.ShouldBindQuery(&cg)
+	if err != nil {
+		response.RespError(c, error2.InvalidParams)
+		return
+	}
+	cg.GetShare(c)
+}
+
 //列出分享
 func ListrShare(c *gin.Context) {
 	var listShare *share.ShareListService

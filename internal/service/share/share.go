@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type CreateShare struct {
+type ShareCreateService struct {
 	SourceID  uint64 `form:"source_id"`
 	IsDir     bool   `form:"is_dir" binding:"oneof=0 1"`
 	ShareCode string `form:"share_code" binding:"len=6"`
@@ -22,9 +22,12 @@ type ShareListService struct {
 	PageSize int    `form:"pageSize" binding:"required, min=10"`
 	order    string `form:"order" binding:"required,eq=DESC|eq=ASC"`
 }
+type ShareGetService struct {
+	ShareCode string `form:"share_code" binding:"required,len=6"`
+}
 
 //创建分享记录
-func (s *CreateShare) Create(c *gin.Context) {
+func (s *ShareCreateService) Create(c *gin.Context) {
 	var err error
 	userCtx, _ := c.Get("user")
 	user := userCtx.(*model.User)
@@ -85,15 +88,7 @@ func Delete(c *gin.Context) {
 	response.RespSuccess(c, "删除该分享记录成功")
 }
 
-type ShareItem struct {
-	CreateDate time.Time `json:"create_date,omitempty"`
-	SourceName string    `json:"source_name"`
-	SourceSize string    `json:"source_size"`
-	ExpireDate time.Time `json:"expire_date,omitempty"`
-	IsDir      bool      `json:"is_dir"`
-	ShareCode  string    `json:"share_code"`
-}
-
+//用户的分享列表
 func (s *ShareListService) ListShare(c *gin.Context) {
 	//获取当前用户
 	userCtx, _ := c.Get("user")
@@ -104,4 +99,21 @@ func (s *ShareListService) ListShare(c *gin.Context) {
 		shares[i].Source()
 	}
 	response.RespList(c, shares, total)
+}
+
+//获取分享
+func (s *ShareGetService) GetShare(c *gin.Context) {
+	//在中间件里设置 c.set(share)
+	shareCtx, _ := c.Get("share")
+	share := shareCtx.(*model.FileShare)
+	if share.ShareCode != "" {
+		//提取码正确
+		if share.ShareCode == s.ShareCode {
+			response.RespData(c, share)
+			return
+		} else {
+			response.RespError(c, "提取码错误")
+			return
+		}
+	}
 }
