@@ -110,3 +110,13 @@ func ListShares(uid uint64, page, pageSize int, order string) ([]FileShare, int6
 	Dbchain.Limit(pageSize).Offset(offset).Order(order).Find(&shares)
 	return shares, total
 }
+
+//根据ShareID获取记录
+func GetShareByID(sharID uint64) (FileShare, error) {
+	fs := FileShare{}
+	err := Db.Where("id = ?", sharID).First(&fs).Error
+	if err != nil {
+		return FileShare{}, err
+	}
+	return fs, nil
+}

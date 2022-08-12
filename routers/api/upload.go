@@ -80,7 +80,7 @@ func Upload(c *gin.Context) {
 	}
 	//3.保存到七牛云上
 	go func() {
-		_, err := cache.QiniuUpload(c, file, fileHeader.Size)
+		_, err := cache.QiniuUpload(c, file, fileHeader.Size, fileHeader.Filename)
 		if err != nil {
 			logger.StdLog().Errorf(c, "Qiniu upload failed:", err)
 			response.RespError(c, error2.ServerError)

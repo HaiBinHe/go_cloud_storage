@@ -4,9 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-cloud/conf"
 	"go-cloud/internal/model"
-	"go-cloud/pkg/app"
-	error2 "go-cloud/pkg/error"
-	"go-cloud/pkg/logger"
 	"go-cloud/pkg/response"
 	"go-cloud/tools"
 	"net/url"
@@ -15,26 +12,26 @@ import (
 )
 
 type CreateShare struct {
-	SourceID  uint64 `json:"source_id"`
-	IsDir     bool   `json:"is_dir" binding:"oneof=0 1"`
-	ShareCode string `json:"share_code" binding:"len=6"`
-	ExpireAt  int64  `json:"expire_at"`
+	SourceID  uint64 `form:"source_id"`
+	IsDir     bool   `form:"is_dir" binding:"oneof=0 1"`
+	ShareCode string `form:"share_code" binding:"len=6"`
+	ExpireAt  int64  `form:"expire_at"`
+}
+type ShareListService struct {
+	Page     int    `form:"page" binding:"required,min=1"`
+	PageSize int    `form:"pageSize" binding:"required, min=10"`
+	order    string `form:"order" binding:"required,eq=DESC|eq=ASC"`
 }
 
+//创建分享记录
 func (s *CreateShare) Create(c *gin.Context) {
 	var err error
 	userCtx, _ := c.Get("user")
 	user := userCtx.(*model.User)
-	cs := CreateShare{}
-	valid, err := app.BindAndValid(c, &cs)
-	if !valid {
-		logger.StdLog().Errorf(c, "app.BindAndValid err :%v", err)
-		response.RespError(c, error2.InvalidParams)
-		return
-	}
+
 	var sourceName string
 	//判断是否是 目录
-	if cs.IsDir {
+	if s.IsDir {
 		folder, _ := model.GetFolderByID(s.SourceID)
 		sourceName = folder.FileFolderName
 	} else {
@@ -63,4 +60,48 @@ func (s *CreateShare) Create(c *gin.Context) {
 		"shareUrl": conf.AppSetting.ShareUrl + sharePath.String(),
 	})
 
+}
+
+//删除分享记录
+func Delete(c *gin.Context) {
+	shareID, _ := strconv.ParseUint(c.Param("share_id"), 10, 64)
+	share, err := model.GetShareByID(shareID)
+	if err != nil {
+		response.RespError(c, "查询不到数据")
+		return
+	}
+	//获取当前用户
+	userCtx, _ := c.Get("user")
+	user := userCtx.(*model.User)
+	if share.UserID != user.ID {
+		response.RespError(c, "该分享记录对应的用户不正确")
+		return
+	}
+	err = share.Delete()
+	if err != nil {
+		response.RespError(c, "删除分享记录失败")
+		return
+	}
+	response.RespSuccess(c, "删除该分享记录成功")
+}
+
+type ShareItem struct {
+	CreateDate time.Time `json:"create_date,omitempty"`
+	SourceName string    `json:"source_name"`
+	SourceSize string    `json:"source_size"`
+	ExpireDate time.Time `json:"expire_date,omitempty"`
+	IsDir      bool      `json:"is_dir"`
+	ShareCode  string    `json:"share_code"`
+}
+
+func (s *ShareListService) ListShare(c *gin.Context) {
+	//获取当前用户
+	userCtx, _ := c.Get("user")
+	user := userCtx.(*model.User)
+	shares, total := model.ListShares(user.ID, s.Page, s.PageSize, s.order)
+	//列出分享对应的文件
+	for i := 0; i < len(shares); i++ {
+		shares[i].Source()
+	}
+	response.RespList(c, shares, total)
 }
