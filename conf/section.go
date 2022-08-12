@@ -16,6 +16,7 @@ type AppSettingS struct {
 	LogFileExt      string
 	UploadSavePath  string
 	UploadServerUrl string
+	ShareUrl        string
 }
 type DatabaseSettingS struct {
 	DBType       string
@@ -39,4 +40,10 @@ type JWTSettingS struct {
 	Secret string
 	Issuer string
 	Expire time.Duration
+}
+type QiniuSettingS struct {
+	AccessKey   string
+	SecretKey   string
+	Bucket      string
+	QiniuServer string
 }

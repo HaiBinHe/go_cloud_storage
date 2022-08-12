@@ -90,4 +90,6 @@ func Login(c *gin.Context) {
 	}
 	//登陆成功
 	userService.DoLogin(c, u)
+	//设置用户
+	c.Set("user", u)
 }

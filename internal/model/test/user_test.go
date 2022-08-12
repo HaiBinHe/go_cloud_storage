@@ -20,7 +20,9 @@ func Test_User(t *testing.T) {
 		return
 	}
 	u1, _ := model.QueryUserByWhere("user_name = ?", u.UserName)
+	u2 := model.GetUserByID(u1.ID)
 	log.Println(u1)
+	log.Println(u2)
 	flag, _ := u1.CheckPassword("123123")
 	log.Println(flag)
 }

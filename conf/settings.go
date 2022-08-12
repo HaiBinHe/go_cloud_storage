@@ -14,6 +14,7 @@ var (
 	JWTSetting      *JWTSettingS
 	DataBaseSetting *DatabaseSettingS
 	RedisSetting    *RedisSettingS
+	QiniuSetting    *QiniuSettingS
 )
 
 func InitSettings() error {
@@ -22,6 +23,7 @@ func InitSettings() error {
 	JWTSetting = &JWTSettingS{}
 	DataBaseSetting = &DatabaseSettingS{}
 	RedisSetting = &RedisSettingS{}
+	QiniuSetting = &QiniuSettingS{}
 	//获取指定目录所在的根目录
 	path := InferRootDir("/conf")
 	cfg, err := ini.Load(path + "/conf/config.ini")
@@ -53,6 +55,11 @@ func InitSettings() error {
 	err = cfg.Section("JWT").MapTo(JWTSetting)
 	if err != nil {
 		log.Fatal("JWT配置加载失败:", err)
+		return err
+	}
+	err = cfg.Section("QINIU").MapTo(QiniuSetting)
+	if err != nil {
+		log.Fatal("七牛云配置加载失败:", err)
 		return err
 	}
 

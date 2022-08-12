@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"go-cloud/conf"
+	"go-cloud/internal/cache"
 	"go-cloud/internal/model"
 	upload2 "go-cloud/internal/service/upload"
 	"go-cloud/pkg/app"
@@ -77,6 +78,15 @@ func Upload(c *gin.Context) {
 		response.RespError(c, error2.ServerError)
 		return
 	}
+	//3.保存到七牛云上
+	go func() {
+		_, err := cache.QiniuUpload(c, file, fileHeader.Size)
+		if err != nil {
+			logger.StdLog().Errorf(c, "Qiniu upload failed:", err)
+			response.RespError(c, error2.ServerError)
+			return
+		}
+	}()
 	response.RespData(c, info)
 
 }
@@ -102,6 +112,7 @@ func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload)
 	if err := tools.SaveFile(fileHeader, dst); err != nil {
 		return nil, err
 	}
+
 	//3.文件信息保存到数据库中
 	uf := upload2.UserUpload{
 		FileStoreID: u.FileStoreID,

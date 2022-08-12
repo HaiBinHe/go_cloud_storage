@@ -8,6 +8,7 @@ import (
 
 type UserFile struct {
 	BaseModel
+	UserID       uint64 `json:"user_id" gorm:"comment:'用户ID'"`
 	FileName     string `json:"file_name" gorm:"size:20;comment:'文件名'"`
 	FileHash     string `json:"file_hash" gorm:"size:32;comment:'文件Hash'"`
 	FileStoreID  uint64 `json:"file_store_id" gorm:"comment:'文件所属仓库'"`
@@ -50,6 +51,16 @@ func GetFilesByType(t tools.FileType, fileStoreID uint64) ([]UserFile, error) {
 		return nil, err
 	}
 	return files, nil
+}
+
+//根据文件ID查询
+func GetFileByFileIDAndUserID(fileID, UserID uint64) (UserFile, error) {
+	uf := UserFile{}
+	err := Db.Where("id = ? and user_id = ?", fileID, UserID).Find(uf).Error
+	if err != nil {
+		return UserFile{}, err
+	}
+	return uf, nil
 }
 
 //创建

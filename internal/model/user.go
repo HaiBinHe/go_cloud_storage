@@ -30,6 +30,12 @@ func GetUserByOpenID(OpenID string) (user User) {
 	return
 }
 
+//根据ID获取用户信息
+func GetUserByID(userID uint64) (user User) {
+	Db.Set("gorm:auto_preload", true).First(&user, userID)
+	return
+}
+
 //根据OpenID查看用户是否存在
 func UserIsExist(OpenID string) bool {
 	affected := Db.Where("open_id=?", OpenID).RowsAffected

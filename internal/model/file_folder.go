@@ -10,3 +10,12 @@ type FileFolder struct {
 func (f *FileFolder) TableName() string {
 	return "file_folder"
 }
+
+func GetFolderByID(folderID uint64) (FileFolder, error) {
+	ff := FileFolder{}
+	err := Db.Where("id = ?", folderID).First(&ff).Error
+	if err != nil {
+		return FileFolder{}, err
+	}
+	return ff, nil
+}
