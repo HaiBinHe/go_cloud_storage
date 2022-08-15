@@ -22,10 +22,17 @@ func TestQiniuUpload(t *testing.T) {
 		return
 	}
 
-	url, err := QiniuUpload(c, file, info.Size(), info.Name())
+	path, err := QiniuUpload(c, file, info.Size(), info.Name())
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println(url)
+	log.Println(path)
+}
+
+func Test_DownloadQiniu(t *testing.T) {
+	_ = conf.InitSettings()
+	path := QiniuDowload(context.Background(), "qiniuTest.txt")
+	//rgft2o3y9.hn-bkt.clouddn.com/qiniuTest.txt?e=1660494830&token=vUrJnQXUNLdvShp3KxqIQEqj_eSgLlyQEQ1r2Dyh:NpDqf8uAJt-EwkASnSDGJEhw5qc=
+	log.Println("http://" + path)
 }

@@ -55,3 +55,29 @@ func HGet(ctx context.Context, key, field string) (string, error) {
 func HGetAll(ctx context.Context, key string) (map[string]string, error) {
 	return rdb.HGetAll(ctx, key).Result()
 }
+
+//返回ID
+func XAdd(ctx context.Context, x *redis.XAddArgs) (string, error) {
+	return rdb.XAdd(ctx, x).Result()
+}
+func XGroupCreate(ctx context.Context, key, group, start string) error {
+	//如果stream不存在则创建一个长度为0的stream
+	return rdb.XGroupCreateMkStream(ctx, key, group, start).Err()
+}
+func XReadGroup(ctx context.Context, a *redis.XReadGroupArgs) ([]redis.XStream, error) {
+	return rdb.XReadGroup(ctx, a).Result()
+}
+
+//查看消费者群组 key:消息队列
+func XInfo(ctx context.Context, key string) []redis.XInfoGroup {
+	return rdb.XInfoGroups(ctx, key).Val()
+}
+func XAck(ctx context.Context, key, group string, ID ...string) error {
+	return rdb.XAck(ctx, key, group, ID...).Err()
+}
+
+//修剪消息队列的长度
+//当队列长度超过上限后，旧消息会被删除，只保留固定长度的新消息。
+func XTrim(ctx context.Context, key string, length int64) error {
+	return rdb.XTrimMaxLen(ctx, key, length).Err()
+}

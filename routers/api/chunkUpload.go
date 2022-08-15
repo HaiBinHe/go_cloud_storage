@@ -67,7 +67,7 @@ func ChunkUpload(c *gin.Context) {
 	data := []byte{}
 	_, err = file.Read(data)
 	if err != nil {
-
+		return
 	}
 	err = cache.HSet(c, cf.UploadID,
 		[]string{

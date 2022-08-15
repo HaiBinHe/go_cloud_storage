@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"fmt"
 	"go-cloud/conf"
 	"io"
 	"mime/multipart"
@@ -89,4 +90,8 @@ func SaveFile(file *multipart.FileHeader, dst string) error {
 	defer func() { _ = out.Close() }()
 	_, err = io.Copy(out, src)
 	return err
+}
+
+func GetBytes(data interface{}) []byte {
+	return []byte(fmt.Sprintf("%v", data))
 }
