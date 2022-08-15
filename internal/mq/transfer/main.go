@@ -39,11 +39,13 @@ func main() {
 			log.Println("open file err :", err)
 			return err
 		}
+		//上传到七牛云
 		path, err := cache.QiniuUploadByByte(context.Background(), bufio.NewReader(file), info.Size(), fileName)
 		if err != nil {
 			return err
 		}
 		log.Println("文件访问路径: ", path)
+		//TODO 删除临时文件：curPath
 		//TODO 保存到数据库也放在这
 		return nil
 	})
