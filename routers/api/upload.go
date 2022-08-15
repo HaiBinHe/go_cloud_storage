@@ -18,10 +18,10 @@ import (
 )
 
 type userUpload struct {
-	Username    string `json:"username" binding:"max=20"`
-	FileStoreID uint64 `json:"file_store_id" binding:"required"`
-	ParentID    uint64 `json:"parent_id,omitempty" `
-	FileHash    string `json:"file_hash" binding:"required"`
+	Username    string `form:"username" binding:"max=20"`
+	FileStoreID uint64 `form:"file_store_id" binding:"required"`
+	ParentID    uint64 `form:"parent_id,omitempty" `
+	FileHash    string `form:"file_hash" binding:"required"`
 	fileName    string `binding:"-"`
 	fileSize    int64  `binding:"-"`
 	fileType    int    `binding:"-"`
@@ -71,6 +71,7 @@ func Upload(c *gin.Context) {
 		response.RespData(c, info)
 		return
 	}
+	//TODO 修改上传逻辑
 	//2.普通上传
 	info, err = upload(file, fileHeader, *uf)
 	if err != nil {

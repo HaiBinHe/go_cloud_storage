@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bufio"
 	"context"
 	"go-cloud/conf"
 	"log"
@@ -11,7 +12,7 @@ import (
 func TestQiniuUpload(t *testing.T) {
 	_ = conf.InitSettings()
 	c := context.Background()
-	info, err := os.Stat("qiniuTest.txt")
+	info, err := os.Stat("bytesTest.txt")
 	if err != nil {
 		log.Println(err)
 		return
@@ -22,7 +23,7 @@ func TestQiniuUpload(t *testing.T) {
 		return
 	}
 
-	path, err := QiniuUpload(c, file, info.Size(), info.Name())
+	path, err := QiniuUploadByByte(c, bufio.NewReader(file), info.Size(), info.Name())
 	if err != nil {
 		log.Println(err)
 		return

@@ -31,7 +31,7 @@ func QiniuUpload(c context.Context, file multipart.File, fileSize int64, fileNam
 	return url + "/" + ret.Key, nil
 
 }
-func QiniuUploadByByte(c context.Context, fileData *bufio.Reader, fileName string) (string, error) {
+func QiniuUploadByByte(c context.Context, fileData *bufio.Reader, fileSize int64, fileName string) (string, error) {
 	url := conf.QiniuSetting.QiniuServer
 	mac := qbox.NewMac(conf.QiniuSetting.AccessKey, conf.QiniuSetting.SecretKey)
 	putPolicy := storage.PutPolicy{
@@ -44,8 +44,7 @@ func QiniuUploadByByte(c context.Context, fileData *bufio.Reader, fileName strin
 	putExtra := storage.PutExtra{}
 	formUploader := storage.NewFormUploader(&cfg)
 	ret := storage.PutRet{}
-	dataLen := int64(fileData.Size())
-	err := formUploader.Put(c, &ret, upToken, fileName, fileData, dataLen, &putExtra)
+	err := formUploader.Put(c, &ret, upToken, fileName, fileData, fileSize, &putExtra)
 	if err != nil {
 		return "", err
 	}

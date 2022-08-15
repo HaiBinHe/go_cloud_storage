@@ -29,12 +29,17 @@ func main() {
 		curPath := fmt.Sprint(msg.Body["curPath"])
 		fileName := fmt.Sprint(msg.Body["fileName"])
 		log.Println("当前文件存放于: ", curPath)
-		file, err := os.Open(curPath)
+		info, err := os.Stat(curPath)
+		if err != nil {
+			return err
+		}
+
+		file, err := os.Open(info.Name())
 		if err != nil {
 			log.Println("open file err :", err)
 			return err
 		}
-		path, err := cache.QiniuUploadByByte(context.Background(), bufio.NewReader(file), fileName)
+		path, err := cache.QiniuUploadByByte(context.Background(), bufio.NewReader(file), info.Size(), fileName)
 		if err != nil {
 			return err
 		}
