@@ -47,7 +47,7 @@ func IsExists(ctx context.Context, key string) bool {
 	return false
 }
 func HSet(ctx context.Context, key string, value ...interface{}) error {
-	return rdb.HSet(ctx, key, value).Err()
+	return rdb.HSet(ctx, key, value...).Err()
 }
 func HGet(ctx context.Context, key, field string) (string, error) {
 	return rdb.HGet(ctx, key, field).Result()

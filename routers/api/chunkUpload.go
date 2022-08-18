@@ -12,23 +12,25 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type chunkFileInfo struct {
 	UserName    string `json:"user_name" binding:"max=20"`
 	FileStoreID uint64 `json:"file_store_id" binding:"required"`
 	ParentID    uint64 `json:"parent_id,omitempty" `
-	FileName    string `json:"file_name" binding:"-"`
+	FileName    string `json:"file_name" binding:"required"`
 	FileExt     string `json:"file_ext" binding:"-"`
 	//单个分块文件的Hash值
 	FileHash    string `json:"file_hash" binding:"required"`
-	UploadID    string `json:"upload_id" binding:"required"`
+	UploadID    string `json:"upload_id" binding:"-"`
 	ChunkNumber int    `json:"chunk_number" binding:"required"`
 	TotalChunk  int    `json:"total_chunk" binding:"required"`
 	ChunkSize   int    `json:"chunk_size" binding:"required"`
 }
 
 //分块上传
+//TODO 将秒传判断分离出来，若不存在就返回一个UploadID
 func ChunkUpload(c *gin.Context) {
 	var err error
 	cf := &chunkFileInfo{}
@@ -39,19 +41,19 @@ func ChunkUpload(c *gin.Context) {
 		return
 	}
 	//获取文件
-	file, fileHeader, err := c.Request.FormFile("file")
+	_, fileHeader, err := c.Request.FormFile("file")
 	if err != nil {
 		logger.StdLog().Errorf(c, "the 'file' field does not match :%v", err)
 		response.RespError(c, error2.InvalidParams)
 		return
 	}
-	cf.FileName = fileHeader.Filename
+	cf.FileName = strings.Split(fileHeader.Filename, ".")[0]
 	cf.FileExt = tools.GetFileExt(fileHeader.Filename)
 	//TODO 秒传判断
 	//获取文件夹
 	savePath := tools.GetSavePath()
-	//文件路径
-	dst := savePath + "/" + cf.UserName + "/chunk/" + cf.FileName + "/" + cf.FileHash + "_" + strconv.Itoa(cf.ChunkNumber)
+	//分块文件存储路径
+	dst := savePath + "/" + cf.UserName + "/chunk/" + cf.FileName
 	//1.检查文件夹是否存在以及权限问题
 	err = checkDirAndPermission(savePath)
 	if err != nil {
@@ -64,18 +66,13 @@ func ChunkUpload(c *gin.Context) {
 		return
 	}
 	//3.存入redis中
-	data := []byte{}
-	_, err = file.Read(data)
-	if err != nil {
-		return
-	}
+	//TODO 限制存活时间 1h
+	cf.UploadID = cf.FileHash + " _" + strconv.Itoa(cf.ChunkNumber)
 	err = cache.HSet(c, cf.UploadID,
 		[]string{
-			"fileHash", cf.FileHash,
 			"chunkNumber", strconv.Itoa(cf.ChunkNumber),
 			"totalChunk", strconv.Itoa(cf.TotalChunk),
 			"chunkSize", strconv.Itoa(cf.ChunkSize),
-			"data", string(data),
 		})
 	if err != nil {
 		response.RespError(c, "存入redis失败")
@@ -83,7 +80,7 @@ func ChunkUpload(c *gin.Context) {
 	}
 	//4.获取文件夹下面有多少个文件
 	chunkList := []string{}
-	dirpath := savePath + "/" + cf.UserName + "/chunk/" + cf.FileHash
+	dirpath := savePath + "/" + cf.UserName + "/chunk/" + cf.FileName
 	files, err := ioutil.ReadDir(dirpath)
 	if err != nil {
 		response.RespError(c, "文件读取失败")
@@ -122,6 +119,7 @@ func CheckChunk(c *gin.Context) {
 }
 
 //合并分块
+//TODO 要修改 前端只需要传入用户名和文件名
 func MergeChunk(c *gin.Context) {
 	var err error
 	cf := &chunkFileInfo{}
@@ -136,9 +134,9 @@ func MergeChunk(c *gin.Context) {
 	//文件路径
 	dst := savePath + "/" + cf.UserName + "/" + cf.FileName
 	cf.FileExt = tools.GetFileExt(cf.FileName)
-	//不存在，可以进行分块上传
+	//不存在，可以进行分块合并
 	if tools.CheckSavePath(dst) {
-		dirpath := savePath + "/" + cf.UserName + "/chunk/" + cf.FileHash
+		dirpath := savePath + "/" + cf.UserName + "/chunk/" + cf.FileName
 		files, err := ioutil.ReadDir(dirpath)
 		if err != nil {
 			response.RespError(c, "读取文件夹失败")
@@ -182,6 +180,7 @@ func MergeChunk(c *gin.Context) {
 			return
 		}
 		//TODO 删除redis中的分块缓存
+		//TODO 删除临时分块文件夹
 
 	}
 	response.RespData(c, map[string]interface{}{
