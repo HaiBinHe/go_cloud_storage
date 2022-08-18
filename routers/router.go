@@ -24,11 +24,22 @@ func NewRouters() *gin.Engine {
 	apiv1.Use(middleware.JWT())
 	{
 		apiv1.GET("/user/:id", nil)
+		apiv1.POST("/user/:id", nil)
+		apiv1.POST("/upload/file", api.Upload)
+		//目录
+		directory := apiv1.Group("/directory")
+		{
+			directory.POST("", api.CreateDir)
+			directory.GET("", api.ListDirectories)
+		}
 		//文件分享
 		share := apiv1.Group("share")
-		share.Use(middleware.ShareOwner())
-		share.Use(middleware.ShareAvailable())
+
 		{
+			share.POST("", api.CreateShare)
+			share.GET("", api.ListrShare)
+			share.GET(":id", middleware.ShareAvailable(), api.GetShare)
+			share.DELETE(":id", middleware.ShareAvailable(), api.DeleteShare)
 		}
 	}
 
