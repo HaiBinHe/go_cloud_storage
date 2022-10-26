@@ -11,11 +11,13 @@ import (
 )
 
 type RegisterUser struct {
-	RegisterName string `form:"register_name" binding:"required,min=3,max=10"`
+	Phone	string `json:"mobile" form:"mobile" binding:"required"`
+	RegisterName string `json:"nickname" form:"nickname" binding:"required,min=3,max=10"`
 	Password     string `form:"password" binding:"required,min=8,max=20"`
 }
 type LoginUser struct {
-	LoginName string `form:"login_name" binding:"required,min=3,max=10"`
+	Phone	string `json:"mobile" form:"mobile"`
+	LoginName string `json:"nickname" form:"nickname" binding:"max=10"`
 	Password  string `form:"password" binding:"required,min=8,max=20"`
 }
 
@@ -36,7 +38,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	//根据用户名查找是否存在
-	_, err = model.QueryUserByWhere("user_name = ?", ru.RegisterName)
+	_, err = model.QueryUserByWhere("user_name = ? AND phone = ?", ru.RegisterName, ru.Phone)
 	//用户名已存在
 	if err == nil {
 		logger.StdLog().Error(c, "User Exist :", ru.RegisterName)
@@ -46,6 +48,7 @@ func Register(c *gin.Context) {
 	u := model.User{
 		UserName: ru.RegisterName,
 		Password: ru.Password,
+		Phone: ru.Phone,
 	}
 	//创建用户
 	err = u.Create()
@@ -54,6 +57,7 @@ func Register(c *gin.Context) {
 		response.RespError(c, error2.ServerError)
 		return
 	}
+	response.RespSuccess(c, "create user success")
 }
 
 //Login 登陆
@@ -68,11 +72,23 @@ func Login(c *gin.Context) {
 		return
 	}
 	//根据用户名查找是否存在
-	u, err := model.QueryUserByWhere("user_name = ?", user.LoginName)
-	if err != nil {
-		logger.StdLog().Error(c, "Can Not Find User :", user.LoginName)
-		response.RespError(c, error2.UserNotExist)
-		return
+	var u model.User
+	if user.LoginName != ""{
+		u, err = model.QueryUserByWhere("user_name = ?", user.LoginName)
+		if err != nil {
+			logger.StdLog().Error(c, "Can Not Find User :", user.LoginName)
+			response.RespError(c, error2.UserNotExist)
+			return
+		}
+	}
+	// 根据手机号查找是否存在
+	if user.Phone != ""{
+		u, err = model.QueryUserByWhere("phone = ?", user.Phone)
+		if err != nil {
+			logger.StdLog().Error(c, "Can Not Find User With Phone :", user.Phone)
+			response.RespError(c, error2.UserNotExist)
+			return
+		}
 	}
 	//检验密码
 	flag, err := u.CheckPassword(user.Password)

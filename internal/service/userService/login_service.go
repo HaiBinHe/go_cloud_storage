@@ -1,6 +1,7 @@
 package userService
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"go-cloud/conf"
 	"go-cloud/internal/model"
@@ -24,9 +25,15 @@ func DoLogin(ctx *gin.Context, user model.User) {
 		logger.StdLog().Fatal(ctx, err)
 		return
 	}
+	userInfo, err := json.Marshal(user)
+	if err != nil {
+		logger.StdLog().Fatal(ctx, err)
+		return
+	}
 	response.RespData(
 		ctx,
 		map[string]string{
+			"userInfos": string(userInfo),
 			"msg":          "登陆成功",
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,

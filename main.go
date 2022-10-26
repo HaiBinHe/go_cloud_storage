@@ -23,6 +23,7 @@ func main() {
 		WriteTimeout:   conf.ServerSetting.WriteTimeOut,
 		MaxHeaderBytes: 1 << 20,
 	}
+	log.Printf("Server start: %v\n", conf.ServerSetting.Port)
 	//信号定义
 	go func() {
 		err := s.ListenAndServe()

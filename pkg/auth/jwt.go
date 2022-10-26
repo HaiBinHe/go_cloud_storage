@@ -26,7 +26,8 @@ func GenerateToken(user model.User, Exp time.Time) (string, error) {
 			Issuer:    conf.JWTSetting.Issuer,
 		},
 	})
-	token, err := tokenClaim.SignedString(GetJWTSecret)
+	signed := GetJWTSecret()
+	token, err := tokenClaim.SignedString(signed)
 	if err != nil {
 		log.Println("generate token failed:", err)
 		return "", err

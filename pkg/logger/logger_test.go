@@ -3,9 +3,14 @@ package logger
 import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"log"
+	"os"
 	"testing"
 )
 
+func TestLogger_Output(t *testing.T) {
+	l := NewLogger(os.Stdout, "", log.LstdFlags)
+	l.Output(LevelInfo, "fianf")
+}
 
 func TestLogger_WithFields(t *testing.T) {
 	l := NewLogger(&lumberjack.Logger{

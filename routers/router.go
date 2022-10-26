@@ -16,15 +16,20 @@ func NewRouters() *gin.Engine {
 	r.Use(middleware.Cors())
 	//翻译
 	r.Use(middleware.Translations())
-	r.POST("/register", api.Register)
-	r.POST("/login", api.Login)
+
 	//设置静态文件
 	r.StaticFS("/static", http.Dir(conf.AppSetting.UploadSavePath))
 	apiv1 := r.Group("/api/v1")
+	{
+		apiv1.POST("/register", api.Register)
+		apiv1.POST("/login", api.Login)
+	}
 	apiv1.Use(middleware.JWT())
 	{
+		// 更新用户信息
 		apiv1.GET("/user/:id", nil)
 		apiv1.POST("/user/:id", nil)
+		// 文件
 		apiv1.POST("/upload/file", api.Upload)
 		//目录
 		directory := apiv1.Group("/directory")
