@@ -3,6 +3,7 @@ package share
 import (
 	"github.com/gin-gonic/gin"
 	"go-cloud/conf"
+	"go-cloud/internal/dao"
 	"go-cloud/internal/model"
 	"go-cloud/pkg/response"
 	"go-cloud/tools"
@@ -17,11 +18,13 @@ type ShareCreateService struct {
 	ShareCode string `form:"share_code" binding:"len=6"`
 	ExpireAt  int64  `form:"expire_at"`
 }
+
 type ShareListService struct {
 	Page     int    `form:"page" binding:"required,min=1"`
 	PageSize int    `form:"pageSize" binding:"required, min=10"`
 	order    string `form:"order" binding:"required,eq=DESC|eq=ASC"`
 }
+
 type ShareGetService struct {
 	ShareCode string `form:"share_code" binding:"required,len=6"`
 }
@@ -35,7 +38,7 @@ func (s *ShareCreateService) Create(c *gin.Context) {
 	var sourceName string
 	//判断是否是 目录
 	if s.IsDir {
-		folder, _ := model.GetFolderByID(s.SourceID)
+		folder, _ := dao.GetFolderByID(s.SourceID)
 		sourceName = folder.FileFolderName
 	} else {
 		file, _ := model.GetFileByFileIDAndUserID(s.SourceID, user.ID)
@@ -68,7 +71,7 @@ func (s *ShareCreateService) Create(c *gin.Context) {
 //删除分享记录
 func Delete(c *gin.Context) {
 	shareID, _ := strconv.ParseUint(c.Param("share_id"), 10, 64)
-	share, err := model.GetShareByID(shareID)
+	share, err := dao.GetShareByID(shareID)
 	if err != nil {
 		response.RespError(c, "查询不到数据")
 		return
@@ -93,7 +96,7 @@ func (s *ShareListService) ListShare(c *gin.Context) {
 	//获取当前用户
 	userCtx, _ := c.Get("user")
 	user := userCtx.(*model.User)
-	shares, total := model.ListShares(user.ID, s.Page, s.PageSize, s.order)
+	shares, total := dao.ListShares(user.ID, s.Page, s.PageSize, s.order)
 	//列出分享对应的文件
 	for i := 0; i < len(shares); i++ {
 		shares[i].Source()

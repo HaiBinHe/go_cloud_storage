@@ -119,7 +119,7 @@ func CheckChunk(c *gin.Context) {
 }
 
 //合并分块
-//TODO 要修改 前端只需要传入用户名和文件名
+//TODO
 func MergeChunk(c *gin.Context) {
 	var err error
 	cf := &chunkFileInfo{}

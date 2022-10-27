@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-cloud/internal/dao"
 	"go-cloud/internal/model"
 	"go-cloud/internal/service/userService"
 	"go-cloud/pkg/app"
@@ -38,7 +39,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	//根据用户名查找是否存在
-	_, err = model.QueryUserByWhere("user_name = ? AND phone = ?", ru.RegisterName, ru.Phone)
+	_, err = dao.QueryUserByWhere("user_name = ? AND phone = ?", ru.RegisterName, ru.Phone)
 	//用户名已存在
 	if err == nil {
 		logger.StdLog().Error(c, "User Exist :", ru.RegisterName)
@@ -72,9 +73,9 @@ func Login(c *gin.Context) {
 		return
 	}
 	//根据用户名查找是否存在
-	var u model.User
+	var u *model.User
 	if user.LoginName != ""{
-		u, err = model.QueryUserByWhere("user_name = ?", user.LoginName)
+		u, err = dao.QueryUserByWhere("user_name = ?", user.LoginName)
 		if err != nil {
 			logger.StdLog().Error(c, "Can Not Find User :", user.LoginName)
 			response.RespError(c, error2.UserNotExist)
@@ -83,7 +84,7 @@ func Login(c *gin.Context) {
 	}
 	// 根据手机号查找是否存在
 	if user.Phone != ""{
-		u, err = model.QueryUserByWhere("phone = ?", user.Phone)
+		u, err = dao.QueryUserByWhere("phone = ?", user.Phone)
 		if err != nil {
 			logger.StdLog().Error(c, "Can Not Find User With Phone :", user.Phone)
 			response.RespError(c, error2.UserNotExist)
@@ -91,7 +92,7 @@ func Login(c *gin.Context) {
 		}
 	}
 	//检验密码
-	flag, err := u.CheckPassword(user.Password)
+	flag, err := dao.CheckPassword(user.Password)
 	//解析密码错误
 	if err != nil {
 		logger.StdLog().Error(c, err)
@@ -105,7 +106,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	//登陆成功
-	userService.DoLogin(c, u)
+	userService.DoLogin(c, *u)
 	//设置用户
 	c.Set("user", u)
 }

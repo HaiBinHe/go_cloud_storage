@@ -1,10 +1,5 @@
 package model
 
-import (
-	"context"
-	"go-cloud/pkg/logger"
-)
-
 //FileCenter 文件中心存储，用于实现秒传
 type FileCenter struct {
 	BaseModel
@@ -18,19 +13,4 @@ type FileCenter struct {
 
 func (f *FileCenter) TableName() string {
 	return "file_center"
-}
-func NewFileCenter() FileCenter {
-	return FileCenter{}
-}
-
-//FileIsExist 根据给出的文件Hash判断是否存在于中心存储表中
-func (f *FileCenter) FileIsExist(fileHash string) bool {
-	var fc FileCenter
-	err := Db.Where("file_hash = ?", fileHash).First(&fc).Error
-	if err != nil {
-		logger.StdLog().Error(context.Background(), "The file does not exist in the fileCenterTable")
-		return false
-	} else {
-		return true
-	}
 }

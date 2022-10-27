@@ -1,9 +1,8 @@
-package cache
+package model
 
 import (
 	"fmt"
 	"go-cloud/conf"
-	"go-cloud/internal/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -54,11 +53,11 @@ func InitMySQLConn() error {
 }
 func autoMigrate() error {
 	return Db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(
-		&model.User{},
-		&model.UserFile{},
-		&model.FileStore{},
-		&model.FileFolder{},
-		&model.FileShare{},
-		&model.FileCenter{},
+		&User{},
+		&UserFile{},
+		&FileStore{},
+		&FileFolder{},
+		&FileShare{},
+		&FileCenter{},
 	)
 }

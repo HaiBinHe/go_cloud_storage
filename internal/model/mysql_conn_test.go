@@ -1,4 +1,4 @@
-package cache
+package model
 
 import (
 	"go-cloud/conf"

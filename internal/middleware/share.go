@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-cloud/internal/dao"
 	"go-cloud/internal/model"
 	"go-cloud/pkg/response"
 	"strconv"
@@ -38,7 +39,7 @@ func ShareAvailable() gin.HandlerFunc {
 			user = userCtx.(*model.User)
 		}
 		shareID, _ := strconv.ParseUint(c.Param("share_id"), 10, 64)
-		share, err := model.GetShareByID(shareID)
+		share, err := dao.GetShareByID(shareID)
 		if err != nil {
 			response.RespError(c, "分享不存在或者已失效")
 			c.Abort()

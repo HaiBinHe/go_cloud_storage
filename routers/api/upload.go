@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-cloud/conf"
 	"go-cloud/internal/cache"
-	"go-cloud/internal/model"
+	"go-cloud/internal/dao"
 	upload2 "go-cloud/internal/service/upload"
 	"go-cloud/pkg/app"
 	error2 "go-cloud/pkg/error"
@@ -141,9 +141,8 @@ func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload)
 //秒传
 func fastUpload(fileHeader *multipart.FileHeader, u *userUpload) (bool, *FileInfo) {
 	//1.查询中心文件表中是否有相同Hash的文件
-	fc := model.NewFileCenter()
 	//中心文件表存在相同Hash的文件
-	if fc.FileIsExist(u.FileHash) {
+	if dao.FileIsExist(u.FileHash) {
 		//文件保存目录
 		savePath := tools.GetSavePath()
 		//文件路径
