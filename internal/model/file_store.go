@@ -5,7 +5,7 @@ type FileStore struct {
 	StoreName   string `json:"store_name" gorm:"type:varchar(20);comment:'文件仓库名称'"`
 	MaxSize     int64  `json:"max_size" gorm:"type:bigint(20);default:104857600;comment:'文件仓库最大容量(KB)'"`
 	CurrentSize int64  `json:"current_size" gorm:"type:bigint(20);default:104857600;comment:'文件仓库当前容量(KB)'"`
-	UserID      uint64 `json:"user_ID" gorm:"comment:'所属用户'"`
+	UserID      uint64 `json:"user_id" gorm:"comment:'所属用户'"`
 }
 
 func (f *FileStore) TableName() string {
@@ -14,5 +14,9 @@ func (f *FileStore) TableName() string {
 
 func (f *FileStore) Create() error {
 	return Db.Create(&f).Error
+}
+
+func (f *FileStore) Update() error{
+	return Db.Model(&FileStore{}).Where("user_id=?", f.UserID).Updates(&f).Error
 }
 

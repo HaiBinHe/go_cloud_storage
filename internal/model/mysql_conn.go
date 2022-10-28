@@ -51,6 +51,7 @@ func InitMySQLConn() error {
 	log.Println("AutoMigrate Success")
 	return nil
 }
+
 func autoMigrate() error {
 	return Db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(
 		&User{},

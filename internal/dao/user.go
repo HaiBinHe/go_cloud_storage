@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+// 删除用户
+func DeleteUser(userId uint64) error{
+	err := model.Db.Delete(&model.User{}, userId).Error
+	if err != nil {
+		return err
+	}
+	// 删除用户对应的存储
+	return DeleteFileStoreByUserID(userId)
+}
 
 //检查密码是否与数据库记录的相同
 func CheckPassword(password string) (bool, error) {
