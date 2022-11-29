@@ -41,7 +41,7 @@ func (s *ShareCreateService) Create(c *gin.Context) {
 		folder, _ := dao.GetFolderByID(s.SourceID)
 		sourceName = folder.FileFolderName
 	} else {
-		file, _ := model.GetFileByFileIDAndUserID(s.SourceID, user.ID)
+		file, _ := dao.GetFileByFileIDAndUserID(s.SourceID, user.ID)
 		sourceName = file.FileName
 	}
 
@@ -99,7 +99,7 @@ func (s *ShareListService) ListShare(c *gin.Context) {
 	shares, total := dao.ListShares(user.ID, s.Page, s.PageSize, s.order)
 	//列出分享对应的文件
 	for i := 0; i < len(shares); i++ {
-		shares[i].Source()
+		// TODO
 	}
 	response.RespList(c, shares, total)
 }

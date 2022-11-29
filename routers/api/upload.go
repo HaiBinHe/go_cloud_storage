@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-cloud/conf"
 	"go-cloud/internal/cache"
 	"go-cloud/internal/dao"
 	upload2 "go-cloud/internal/service/upload"
@@ -35,6 +34,7 @@ type FileInfo struct {
 	UploadPath string
 }
 
+// 上传逻辑
 func Upload(c *gin.Context) {
 	uf := &userUpload{}
 	var err error
@@ -44,12 +44,14 @@ func Upload(c *gin.Context) {
 		response.RespError(c, error2.InvalidParams)
 		return
 	}
-	file, fileHeader, err := c.Request.FormFile("file")
+
+	formFile, fileHeader, err := c.Request.FormFile("formFile")
 	if err != nil {
-		logger.StdLog().Errorf(c, "the 'file' field does not match :%v", err)
+		logger.StdLog().Errorf(c, "the 'formFile' field does not match :%v", err)
 		response.RespError(c, error2.InvalidParams)
 		return
 	}
+	// 获取文件基础信息
 	uf.fileName = strings.Split(fileHeader.Filename, ".")[0]
 	uf.fileSize = fileHeader.Size
 	uf.fileExt = tools.GetFileExt(fileHeader.Filename)
@@ -65,15 +67,21 @@ func Upload(c *gin.Context) {
 	}
 	uf.FileStoreID = fs
 	uf.ParentID = p
+	fileHash, err := tools.FileHash(formFile)
+	if err != nil {
+		logger.StdLog().Errorf(c, "tools.FileHash failed:", err)
+		response.RespError(c, error2.ServerError)
+		return
+	}
+	uf.FileHash = fileHash
 	//1.秒传
 	ok, info := fastUpload(fileHeader, uf)
 	if ok {
 		response.RespData(c, info)
 		return
 	}
-	//TODO 修改上传逻辑
 	//2.普通上传
-	info, err = upload(file, fileHeader, *uf)
+	info, err = upload(fileHeader, *uf)
 	if err != nil {
 		logger.StdLog().Errorf(c, "upload failed:", err)
 		response.RespError(c, error2.ServerError)
@@ -81,7 +89,7 @@ func Upload(c *gin.Context) {
 	}
 	//3.保存到七牛云上
 	go func() {
-		_, err := cache.QiniuUpload(c, file, fileHeader.Size, fileHeader.Filename)
+		_, err := cache.QiniuUpload(c, formFile, fileHeader.Size, fileHeader.Filename)
 		if err != nil {
 			logger.StdLog().Errorf(c, "Qiniu upload failed:", err)
 			response.RespError(c, error2.ServerError)
@@ -89,20 +97,15 @@ func Upload(c *gin.Context) {
 		}
 	}()
 	response.RespData(c, info)
-
 }
 
-//TODO 普通上传,保存到数据库,OSS存储,Ceph存储
 //上传文件
-func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload) (*FileInfo, error) {
+func upload(fileHeader *multipart.FileHeader, u userUpload) (*FileInfo, error) {
 	//文件保存目录
 	savePath := tools.GetSavePath()
 	//文件路径
 	dst := savePath + "/" + u.Username + "/" + u.fileName
-	//文件访问路径
-	//如果有同名的文件 访问路径不就一样了, 用户名+文件名 生成md5
-	md5path := tools.EncodeMD5(u.Username + u.fileName)
-	accessUrl := conf.AppSetting.UploadServerUrl + "/" + md5path
+
 	//1.检查文件夹是否存在以及权限问题
 	err := checkDirAndPermission(savePath)
 	if err != nil {
@@ -124,17 +127,19 @@ func upload(file multipart.File, fileHeader *multipart.FileHeader, u userUpload)
 		FileSize:    u.fileSize,
 		ParentID:    u.ParentID,
 	}
-	err = upload2.SaveToDB(uf)
+	// 保存到用户文件表中
+	err = upload2.SaveUserFile(uf)
 	if err != nil {
 		return nil, err
 	}
-	//TODO 保存到中心文件表中
-
+	// 保存到中心文件表中
+	err = upload2.SaveCenterFile(uf)
+	if err != nil {
+		return nil, err
+	}
 	return &FileInfo{
 		Name:       u.fileName,
 		Size:       u.fileSize,
-		AccessUrl:  accessUrl,
-		UploadPath: dst,
 	}, nil
 }
 
@@ -143,26 +148,17 @@ func fastUpload(fileHeader *multipart.FileHeader, u *userUpload) (bool, *FileInf
 	//1.查询中心文件表中是否有相同Hash的文件
 	//中心文件表存在相同Hash的文件
 	if dao.FileIsExist(u.FileHash) {
-		//文件保存目录
-		savePath := tools.GetSavePath()
 		//文件路径
-		dst := savePath + "/" + u.Username + "/" + u.fileName
-		//生成文件路径
-		md5path := tools.EncodeMD5(u.Username + u.fileName)
-		accessUrl := conf.AppSetting.UploadServerUrl + "/" + md5path
-
+		dst := "center" + u.FileHash
 		//2.返回成功以及文件相关信息
 		return true, &FileInfo{
-			AccessUrl:  accessUrl,
+			AccessUrl:  "",
 			UploadPath: dst,
 			Name:       fileHeader.Filename,
 			Size:       fileHeader.Size,
 		}
-	} else {
-		//3.中心文件不存在则进入普通上传模块
-		//TODO 同时将数据存入中心文件表中
-		return false, nil
 	}
+	return false, nil
 }
 
 func checkDirAndPermission(savePath string) error {

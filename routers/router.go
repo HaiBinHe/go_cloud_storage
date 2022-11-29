@@ -47,6 +47,5 @@ func NewRouters() *gin.Engine {
 			share.DELETE(":id", middleware.ShareAvailable(), api.DeleteShare)
 		}
 	}
-
 	return r
 }

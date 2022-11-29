@@ -1,6 +1,8 @@
 package tools
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"go-cloud/conf"
 	"io"
@@ -32,6 +34,17 @@ func Type(ext string) FileType {
 
 }
 
+func FileHash(f multipart.File) (string, error) {
+	buf := []byte{}
+	 _, err := f.Read(buf)
+	if err != nil {
+		return "", err
+	}
+	m := md5.New()
+	m.Write(buf)
+	return hex.EncodeToString(m.Sum(nil)), nil
+}
+
 //将正常的文件名转为md5形式的文件名
 func GetMD5FileName(name string) string {
 	ext := GetFileExt(name)
@@ -57,7 +70,6 @@ func CheckSavePath(dst string) bool {
 
 //TODO 检查文件是否达到分块标准
 func CheckMaxSize(f multipart.File) bool {
-
 	return false
 }
 

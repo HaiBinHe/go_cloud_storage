@@ -23,7 +23,7 @@ type ChunkInfo struct {
 	ChunkSize   int    `json:"chunk_size" binding:"required"`
 }
 
-func SaveToDB(u UserUpload) error {
+func SaveUserFile(u UserUpload) error {
 	uf := model.UserFile{
 		FileName:     u.FileName,
 		FileHash:     u.FileHash,
@@ -33,6 +33,17 @@ func SaveToDB(u UserUpload) error {
 		FileExt:      u.FileExt,
 		FileType:     strconv.Itoa(u.FileType),
 	}
-	err := uf.Create()
-	return err
+	return uf.Create()
+}
+
+func SaveCenterFile(u UserUpload) error{
+	cf := model.FileCenter{
+		FileName: u.FileName,
+		FileHash: u.FileHash,
+		FileSize: u.FileSize,
+		FileExt:  u.FileExt,
+		FileType: strconv.Itoa(u.FileType),
+		FileSavePath: "/center/" + u.FileHash,
+	}
+	return cf.Create()
 }

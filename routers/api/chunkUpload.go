@@ -174,7 +174,7 @@ func MergeChunk(c *gin.Context) {
 			FileSize:    totalSize,
 			ParentID:    cf.ParentID,
 		}
-		err = upload2.SaveToDB(uf)
+		err = upload2.SaveUserFile(uf)
 		if err != nil {
 			response.RespError(c, "数据库写入错误")
 			return
